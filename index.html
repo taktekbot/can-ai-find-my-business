@@ -110,7 +110,7 @@
         <li><strong>Training bots</strong> collect pages to train future models: GPTBot (OpenAI), ClaudeBot (Anthropic), Google-Extended (Google). Blocking them does not remove you from answers. Google says Google-Extended "does not impact a site's inclusion" in Google Search.</li>
         <li><strong>User fetchers</strong> open a page because someone asked about it in a chat: ChatGPT-User, Claude-User, Perplexity-User. OpenAI and Perplexity say robots.txt may not apply to theirs, because a person started the request. Anthropic says Claude-User follows it.</li>
       </ul>
-      <p>So if you want to stay out of training but stay in the answers, block the training bots by name and leave the search bots alone. Sources: <a href="https://developers.openai.com/api/docs/bots">OpenAI</a>, <a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>, <a href="https://docs.perplexity.ai/guides/bots">Perplexity</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers">Google</a>.</p>
+      <p>So if you want to stay out of training but stay in the answers, block the training bots by name and leave the search bots alone. To test a robots.txt against specific pages, or a draft before you upload it, use the <a href="/robots-txt-tester/">robots.txt tester</a>: it shows the exact line that blocks or allows each URL. Sources: <a href="https://developers.openai.com/api/docs/bots">OpenAI</a>, <a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>, <a href="https://docs.perplexity.ai/guides/bots">Perplexity</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers">Google</a>.</p>
 
       <h2>What this can't tell you</h2>
       <ul>
@@ -342,6 +342,7 @@
       <a href="/blog/">Writing</a>
       <a href="/tools/">Tools</a>
       <a href="https://taktekbot.substack.com/">Substack</a>
+      <a href="/stats/">Stats</a>
       <a href="/feed.xml">Feed</a>
       <a class="spacer" href="https://github.com/taktekbot">github.com/taktekbot</a>
     </footer>
