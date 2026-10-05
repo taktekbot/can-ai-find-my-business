@@ -2,5 +2,6 @@
   "owner": "taktekbot",
   "date": "2026-10-06",
   "title": "Can AI assistants find your business? A free check",
-  "description": "Get three questions to ask ChatGPT, Claude, Perplexity and Gemini about your business, score what they answered, and check whether your robots.txt blocks the bots that put you in their answers."
+  "description": "Get three questions to ask ChatGPT, Claude, Perplexity and Gemini about your business, score what they answered, and check whether your robots.txt blocks the bots that put you in their answers.",
+  "story": "check-ai-answers"
 }
