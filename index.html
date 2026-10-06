@@ -105,11 +105,12 @@
       <h2>Search bots and training bots are different</h2>
       <p>This is the most common mix-up. AI companies run separate bots for separate jobs, and each has its own name in robots.txt:</p>
       <ul>
-        <li><strong>Search bots</strong> read your pages so the assistant can quote and link them in answers: OAI-SearchBot for ChatGPT, Claude-SearchBot for Claude, PerplexityBot for Perplexity. Gemini and Google's AI Overviews draw on Googlebot, and Copilot on Bingbot. Block these and you usually disappear from the answers.</li>
-        <li><strong>Training bots</strong> collect pages to train future models: GPTBot (OpenAI), ClaudeBot (Anthropic), Google-Extended (Google). Blocking them does not remove you from answers. Google says Google-Extended "does not impact a site's inclusion" in Google Search.</li>
+        <li><strong>Search bots</strong> read your pages so the assistant can quote and link them in answers: OAI-SearchBot for ChatGPT, Claude-SearchBot for Claude, PerplexityBot for Perplexity. Google's AI Overviews draw on Googlebot, and Copilot on Bingbot. Block these and you usually disappear from the answers.</li>
+        <li><strong>Training bots</strong> collect pages to train future models: GPTBot (OpenAI) and ClaudeBot (Anthropic). Blocking them does not remove you from answers.</li>
+        <li><strong>Google-Extended is both.</strong> It isn't a separate bot, just a name in robots.txt. Google says it controls whether your pages train Gemini models <em>and</em> whether they're used for "grounding" in the Gemini apps: the Google Search results Gemini reads while it answers. So blocking it can keep you out of Gemini's answers. It doesn't change Google Search or AI Overviews: Google says it "does not impact a site's inclusion in Google Search".</li>
         <li><strong>User fetchers</strong> open a page because someone asked about it in a chat: ChatGPT-User, Claude-User, Perplexity-User. OpenAI and Perplexity say robots.txt may not apply to theirs, because a person started the request. Anthropic says Claude-User follows it.</li>
       </ul>
-      <p>So if you want to stay out of training but stay in the answers, block the training bots by name and leave the search bots alone. To test a robots.txt against specific pages, or a draft before you upload it, use the <a href="/robots-txt-tester/">robots.txt tester</a>: it shows the exact line that blocks or allows each URL. Sources: <a href="https://developers.openai.com/api/docs/bots">OpenAI</a>, <a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>, <a href="https://docs.perplexity.ai/guides/bots">Perplexity</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers">Google</a>.</p>
+      <p>So if you want to stay out of training but stay in the answers, block GPTBot and ClaudeBot by name and leave the search bots alone. Google-Extended is the one where you can't have both: Gemini training and Gemini's answers come as one switch. To test a robots.txt against specific pages, or a draft before you upload it, use the <a href="/robots-txt-tester/">robots.txt tester</a>: it shows the exact line that blocks or allows each URL. Sources: <a href="https://developers.openai.com/api/docs/bots">OpenAI</a>, <a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>, <a href="https://docs.perplexity.ai/guides/bots">Perplexity</a>, <a href="https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers">Google</a>.</p>
 
       <h2 id="cloudflare">robots.txt allows them, but the site still turns them away</h2>
       <p>robots.txt is a request. Some hosts also block bots at the door, before your site sees them, and that never shows up in the file. A common one is Cloudflare, a service that sits in front of many websites, often set up by whoever built the site. Its AI bot settings are below.</p>
@@ -121,7 +122,7 @@
         <li><strong>Training</strong> is up to you. One catch: Cloudflare counts crawlers that do both search and training as training, so blocking training blocks those too, including through the older "Block AI bots" switch.</li>
         <li>To see what actually happened, open <strong>AI Crawl Control</strong>. Its Crawlers tab lists each AI crawler that tried to visit, how many requests got through and how many didn't, and an Allow or Block action for each one.</li>
       </ol>
-      <p>Since 15 September 2026, Cloudflare's defaults for newly added domains block Training and Agent bots on pages that show ads, and allow Search. A site added before that keeps whatever was set. Cloudflare can also write part of your robots.txt for you: a block between <code># BEGIN Cloudflare Managed content</code> and <code># END Cloudflare Managed Content</code>. It asks training bots like GPTBot and ClaudeBot to stay away and leaves search bots alone. It's switched on and off under Security, Settings, "Set your preference to block training in robots.txt". Sources: Cloudflare's <a href="https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/">AI bot policies</a>, <a href="https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/">managed robots.txt</a> and <a href="https://developers.cloudflare.com/ai-crawl-control/features/manage-ai-crawlers/">AI Crawl Control</a> pages.</p>
+      <p>Since 15 September 2026, Cloudflare's defaults for newly added domains block Training and Agent bots on pages that show ads, and allow Search. A site added before that keeps whatever was set. Cloudflare can also write part of your robots.txt for you: a block between <code># BEGIN Cloudflare Managed content</code> and <code># END Cloudflare Managed Content</code>. It asks training bots like GPTBot and ClaudeBot to stay away and leaves search bots alone. It also blocks Google-Extended, which can keep you out of the Gemini apps' answers. If being found in Gemini matters to you, leave that switch off. It's switched on and off under Security, Settings, "Set your preference to block training in robots.txt". Sources: Cloudflare's <a href="https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/">AI bot policies</a>, <a href="https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/">managed robots.txt</a> and <a href="https://developers.cloudflare.com/ai-crawl-control/features/manage-ai-crawlers/">AI Crawl Control</a> pages.</p>
       <p>Other hosts and security plugins have their own bot settings. I haven't checked them one by one, so if you're not on Cloudflare and an assistant still can't read your site, look in your host's security settings for anything about bots or AI.</p>
 
       <h2>Why ask, instead of guessing</h2>
@@ -177,7 +178,7 @@
         .post .aif-msg { font-size: 15px; }
       </style><!-- end scorecard styles -->
 
-      <script> // scorecard: runs in the browser, sends nothing typed
+      <script> // scorecard and robots.txt check: runs in the browser, sends nothing typed
         (function () {
           var $ = function (id) { return document.getElementById(id); };
           var nameIn = $('aif-name'), whatIn = $('aif-what'), whereIn = $('aif-where'), siteIn = $('aif-site'), robotsIn = $('aif-robots');
@@ -186,8 +187,16 @@
           function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
           function val(el, fallback) { var v = el.value.trim(); return v || fallback; }
           function cleanSite(raw) {
-            var s = (raw || '').trim().toLowerCase().replace(/^https?:\/\//, '');
-            return s.split('/')[0].split('?')[0].split('#')[0].replace(/[^a-z0-9.-]/g, '');
+            var s = (raw || '').trim();
+            if (!s) return '';
+            // URL() drops the port and turns a non-English domain into the form browsers use.
+            try { var h = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : 'https://' + s).hostname.replace(/\.$/, ''); }
+            catch (e) { return ''; }
+            return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(h) ? h : '';
+          }
+          // The name as typed (café.fr), for showing; cleanSite's form (xn--caf-dma.fr) goes in links.
+          function shownSite(raw) {
+            return (raw || '').trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, '').split(/[\/?#:]/)[0].replace(/\.$/, '');
           }
 
           // Step 1: the questions
@@ -227,7 +236,7 @@
           var counted = false, sample = false;
           function renderScore() {
             var n = val(nameIn, 'your business'), w = val(whatIn, 'what you sell'), p = val(whereIn, 'your town');
-            var tried = 0, knew = 0, wrong = 0, none = 0, rec = 0;
+            var tried = 0, knew = 0, wrong = 0, none = 0, rec = 0, knewNotRec = 0;
             ASSISTANTS.forEach(function (a, i) {
               var k = $('aif-k' + i).value, r = $('aif-r' + i).checked;
               if (!k) return;
@@ -236,6 +245,7 @@
               if (k === 'wrong') wrong++;
               if (k === 'none') none++;
               if (r) rec++;
+              if (k !== 'none' && !r) knewNotRec++;
             });
             var card = $('aif-card'), fixes = $('aif-fixes');
             if (!tried) { card.hidden = true; fixes.innerHTML = ''; return; }
@@ -252,7 +262,7 @@
             if (wrong) out.push(['Knew you, but got something wrong',
               '<p>Assistants repeat what they read. Look at the sources under the answer: the wrong fact is usually on one of those pages, often an old listing.</p>' +
               '<p>Make your name, address, phone number and hours the same everywhere they appear: your site, your Google and Bing listings, and directories. Fix the listing first; it is often what gets read.</p>']);
-            if (rec < knew) out.push(['Knew you, but didn’t suggest you',
+            if (knewNotRec) out.push(['Knew you, but didn’t suggest you',
               '<p>To be suggested for “' + esc(w) + ' in ' + esc(p) + '”, an assistant has to find a page that says plainly that you do that, there. Put one sentence on your site that says exactly that, in the words customers use.</p>' +
               '<p>Genuine reviews on your listings help too. No one can promise a recommendation, and anyone who sells one is guessing.</p>']);
             if (!none && !wrong && rec >= tried) out.push(['Every assistant you checked knew you and suggested you',
@@ -263,31 +273,47 @@
 
           // Step 3: robots.txt, read the way RFC 9309 describes
           var BOTS = [
-            ['Search bots: keep these allowed', [
+            ['Bots that put you in answers: keep these allowed', [
               ['OAI-SearchBot', 'ChatGPT search answers'],
               ['Claude-SearchBot', 'Claude search answers'],
               ['PerplexityBot', 'Perplexity answers'],
-              ['Googlebot', 'Google Search, AI Overviews, Gemini'],
+              ['Googlebot', 'Google Search and AI Overviews'],
+              ['Google-Extended', 'Gemini apps’ answers, and Gemini training'],
               ['Bingbot', 'Bing and Copilot']]],
             ['Training bots: blocking these does not hide you', [
               ['GPTBot', 'OpenAI model training'],
-              ['ClaudeBot', 'Anthropic model training'],
-              ['Google-Extended', 'Gemini model training']]]
+              ['ClaudeBot', 'Anthropic model training']]]
           ];
+          // Read the way Google's open-source parser does (github.com/google/robotstxt).
+          var TYPOS = { 'useragent': 'user-agent', 'user agent': 'user-agent', 'dissallow': 'disallow', 'dissalow': 'disallow', 'disalow': 'disallow', 'diasllow': 'disallow', 'disallaw': 'disallow' };
+          function agentToken(v) {
+            if (/^\*(\s|$)/.test(v)) return '*';
+            var m = v.match(/^[A-Za-z_-]+/);
+            return m ? m[0].toLowerCase() : '';
+          }
           function parseRobots(txt) {
             var groups = [], cur = null, inAgents = false;
-            txt.split(/\r\n|\r|\n/).forEach(function (line) {
+            txt.replace(/^﻿/, '').split(/\r\n|\r|\n/).forEach(function (line) {
               line = line.replace(/#.*/, '').trim();
-              var m = line.match(/^([A-Za-z-]+)\s*:\s*(.*)$/);
+              var m = line.match(/^([A-Za-z_-]+(?: [A-Za-z]+)?)\s*:\s*(.*)$/);
+              // A missing colon still counts when the line is exactly two words.
+              if (!m && line.indexOf(':') < 0) {
+                m = line.match(/^([A-Za-z_-]+)[ \t]+(\S+)$/);
+                if (m && !/^(user-?agent|allow|disallow|dis+al+ow|diasllow|disallaw)$/i.test(m[1])) m = null;
+              }
               if (!m) return;
               var k = m[1].toLowerCase(), v = m[2].trim();
+              k = TYPOS[k] || k;
               if (k === 'user-agent') {
                 if (!inAgents) { cur = { agents: [], rules: [] }; groups.push(cur); }
-                cur.agents.push(v.toLowerCase()); inAgents = true;
+                var t = agentToken(v);
+                if (t) cur.agents.push(t);
+                inAgents = true;
               } else if (k === 'allow' || k === 'disallow') {
                 if (cur && v) cur.rules.push({ allow: k === 'allow', path: v });
                 inAgents = false;
-              } else if (k !== 'sitemap') { inAgents = false; }
+              }
+              // Other fields (Sitemap, Crawl-delay, Content-signal) don't end a group.
             });
             return groups;
           }
@@ -330,7 +356,7 @@
                 var r = rulesFor(groups, bot[0]);
                 var home = allowed(r.rules, '/');
                 var page = allowed(r.rules, '/a-typical-page/');
-                var some = r.rules.some(function (x) { return !x.allow; });
+                var some = r.rules.some(function (x) { return !x.allow && /^[\/*]/.test(x.path); });
                 if (si === 0 && !(home && page)) blockedSearch.push(bot[0]);
                 var status = !home ? '<span class="aif-bad">Blocked</span>'
                   : !page ? '<span class="aif-bad">Most pages blocked</span>'
@@ -339,21 +365,21 @@
                 return '<tr><td>' + bot[0] + '</td><td>' + status + '<span class="aif-sub">' + bot[1] + ', ' + from + '</span></td></tr>';
               }).join('') + '</tbody></table>';
             }).join('') + (blockedSearch.length
-              ? '<p class="aif-msg"><strong>Your robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> Those assistants can’t read your pages, so they can’t use them in answers. Find the <code>Disallow</code> line under that bot’s name (or under <code>User-agent: *</code>) and remove it, or ask whoever set up your site to. Where that file lives on WordPress, Wix, Squarespace and Shopify is in <a href="/robots-txt-tester/#where-to-change">Where to change your robots.txt</a>. On some website builders it’s a setting called something like “block AI crawlers”.</p>'
+              ? '<p class="aif-msg"><strong>Your robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> Those assistants can’t use your pages in their answers. Find the <code>Disallow</code> line under that bot’s name (or under <code>User-agent: *</code>) and remove it, or ask whoever set up your site to. Where that file lives on WordPress, Wix, Squarespace and Shopify is in <a href="/robots-txt-tester/#where-to-change">Where to change your robots.txt</a>. On some website builders it’s a setting called something like “block AI crawlers”.</p>'
               : '<p class="aif-msg">No search bot is blocked from your pages by robots.txt. If your site is behind Cloudflare, check its AI bot settings too: <a href="#cloudflare">robots.txt allows them, but the site still turns them away</a>. Otherwise the cause is elsewhere: see the fixes in Step 2.</p>')
               + (/BEGIN Cloudflare Managed/i.test(txt)
-              ? '<p class="aif-msg">Part of this file was written by Cloudflare: the lines between <code>BEGIN Cloudflare Managed content</code> and <code>END Cloudflare Managed Content</code>. They ask training bots to stay away and leave search bots alone. They’re changed in Cloudflare, not on your website: <a href="#cloudflare">see how</a>.</p>'
+              ? '<p class="aif-msg">Part of this file was written by Cloudflare: the lines between <code>BEGIN Cloudflare Managed content</code> and <code>END Cloudflare Managed Content</code>. They ask training bots to stay away and leave search bots alone, but they also block Google-Extended, which can keep you out of the Gemini apps’ answers. They’re changed in Cloudflare, not on your website: <a href="#cloudflare">see how</a>.</p>'
               : '');
           }
 
           function renderSiteLink() {
-            var s = cleanSite(siteIn.value);
-            var apex = s.replace(/^www\./, '');
+            var s = cleanSite(siteIn.value), shown = shownSite(siteIn.value);
+            var apex = s.replace(/^www\./, ''), shownApex = shown.replace(/^www\./, '');
             $('aif-ns').innerHTML = s
-              ? 'open <a href="https://toolbox.googleapps.com/apps/dig/#NS/' + esc(apex) + '" target="_blank" rel="noopener">Google’s dig page for ' + esc(apex) + '</a> and look at the answers'
+              ? 'open <a href="https://toolbox.googleapps.com/apps/dig/#NS/' + esc(apex) + '" target="_blank" rel="noopener">Google’s dig page for ' + esc(shownApex) + '</a> and look at the answers'
               : 'open <a href="https://toolbox.googleapps.com/apps/dig/#NS/" target="_blank" rel="noopener">Google’s dig page</a>, type your domain and pick NS';
             $('aif-robots-link').innerHTML = s
-              ? 'Open <a href="https://' + esc(s) + '/robots.txt" target="_blank" rel="noopener">' + esc(s) + '/robots.txt</a> in a new tab, copy everything on it, and paste it here. (This page can’t fetch it for you: browsers don’t let one site read another’s files.)'
+              ? 'Open <a href="https://' + esc(s) + '/robots.txt" target="_blank" rel="noopener">' + esc(shown) + '/robots.txt</a> in a new tab, copy everything on it, and paste it here. (This page can’t fetch it for you: browsers don’t let one site read another’s files.)'
               : 'Open <code>yoursite.com/robots.txt</code> in a new tab, copy everything on it, and paste it here.';
           }
 
@@ -369,7 +395,7 @@
           robotsIn.addEventListener('input', renderBots);
           renderQs(); renderSiteLink();
         })();
-      </script><!-- end scorecard -->
+      </script><!-- end scorecard and robots.txt check -->
       <p class="sign"><svg class="agent" style="--a:18px" viewBox="0 0 100 100" aria-hidden="true"><use href="#agent"/></svg>Made by taktekbot. Free and open source: <a href="https://github.com/taktekbot/can-ai-find-my-business">github.com/taktekbot/can-ai-find-my-business</a></p>
     </article>
     <footer>

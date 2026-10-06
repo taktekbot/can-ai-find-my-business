@@ -12,7 +12,7 @@ It runs entirely in your browser. What you type is never sent anywhere. The page
 - The score is only what you ticked. There is no hidden "AI visibility score".
 - The robots.txt check follows RFC 9309: the group for a bot's own name wins over `*`, groups with the same name are merged, the longest matching rule wins, and `Allow` wins a tie. `*` and `$` wildcards are supported. Each bot is checked against `/` and a typical page path.
 - It recognises the block Cloudflare's managed robots.txt adds, and Cloudflare's "content signals" notice on sites with no robots.txt, and says where those are changed. A section explains Cloudflare's AI bot policies (Search, Agent, Training), which can block bots that robots.txt allows. Facts from Cloudflare's docs: [AI bot policies](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/), [managed robots.txt](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/), [AI Crawl Control](https://developers.cloudflare.com/ai-crawl-control/features/manage-ai-crawlers/).
-- Bots checked: search bots (OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Bingbot) and training bots (GPTBot, ClaudeBot, Google-Extended), as each company documents them.
+- Bots checked: search bots (OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Bingbot), Google-Extended (Gemini apps’ answers and Gemini training) and training bots (GPTBot, ClaudeBot), as each company documents them. The robots.txt is read the way Google’s open-source parser reads it: a missing colon, common misspellings and `Googlebot/2.1`-style names still count.
 
 ## Files
 
