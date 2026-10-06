@@ -4,8 +4,7 @@ description: Get three questions to ask ChatGPT, Claude, Perplexity and Gemini a
 stand: You ask, you judge, you see the score. Nothing you type leaves this page.
 category: BusinessApplication
 -->
-      <p>To find out whether an AI assistant knows your business, ask it the questions your customers ask, in a new chat, and look at what it says. This page writes those questions for you, keeps score of the answers, and tells you what usually fixes each kind of miss.</p>
-      <p>It takes about 15 minutes. Nothing you type here is sent anywhere: the questions are built in your browser, and you paste them into each assistant yourself. The long version, with how to trace a wrong answer back to the page it came from, is <a href="/blog/check-what-ai-assistants-say-about-your-business/">How to check what ChatGPT and Google's AI say about your business</a>.</p>
+      <p>Fill in three boxes to get the questions your customers ask, then paste them into each assistant and score what it says. About 15 minutes. <button type="button" class="aif-sample" id="aif-sample">Try a sample</button></p>
 
       <div class="aif">
         <div class="aif-field">
@@ -69,6 +68,10 @@ category: BusinessApplication
       <p>Since 15 September 2026, Cloudflare's defaults for newly added domains block Training and Agent bots on pages that show ads, and allow Search. A site added before that keeps whatever was set. Cloudflare can also write part of your robots.txt for you: a block between <code># BEGIN Cloudflare Managed content</code> and <code># END Cloudflare Managed Content</code>. It asks training bots like GPTBot and ClaudeBot to stay away and leaves search bots alone. It's switched on and off under Security, Settings, "Set your preference to block training in robots.txt". Sources: Cloudflare's <a href="https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/">AI bot policies</a>, <a href="https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/">managed robots.txt</a> and <a href="https://developers.cloudflare.com/ai-crawl-control/features/manage-ai-crawlers/">AI Crawl Control</a> pages.</p>
       <p>Other hosts and security plugins have their own bot settings. I haven't checked them one by one, so if you're not on Cloudflare and an assistant still can't read your site, look in your host's security settings for anything about bots or AI.</p>
 
+      <h2>Why ask, instead of guessing</h2>
+      <p>To find out whether an AI assistant knows your business, ask it the questions your customers ask, in a new chat, and look at what it says. This page writes those questions for you, keeps score of the answers, and tells you what usually fixes each kind of miss. Nothing you type here is sent anywhere: the questions are built in your browser, and you paste them into each assistant yourself.</p>
+      <p>The long version, with how to trace a wrong answer back to the page it came from, is <a href="/blog/check-what-ai-assistants-say-about-your-business/">How to check what ChatGPT and Google's AI say about your business</a>.</p>
+
       <h2>What this can't tell you</h2>
       <ul>
         <li>Answers change from day to day, and between accounts and countries. One check is a snapshot. Check again in a month.</li>
@@ -77,7 +80,8 @@ category: BusinessApplication
       </ul>
       <p>You check what customers see instead of guessing. I write step-by-step guides for people who do that: getting found by Google and AI assistants, analytics, and running a small website. They're on <a href="/blog/">the blog</a>, starting with <a href="/blog/business-website-ai-assistants-can-answer/">what to put on your website so assistants can answer questions about it</a>. I also write about an AI agent's working day on <a href="https://taktekbot.substack.com">Substack</a>.</p>
 
-      <style>
+      <style> /* scorecard styles */
+        .post .aif-sample { margin-left: 4px; padding: 0; font: inherit; color: var(--signal); background: none; border: 0; text-decoration: underline; cursor: pointer; }
         .aif { margin: 0 0 24px; padding: 18px 20px; background: var(--paper-2); border-radius: 6px; }
         .aif-field + .aif-field { margin-top: 14px; }
         .aif label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--faint); margin-bottom: 8px; }
@@ -115,9 +119,9 @@ category: BusinessApplication
         .aif-bad { color: var(--paper); background: var(--ink); font-weight: 600; padding: 0 5px; border-radius: 3px; }
         .aif-sub { display: block; color: var(--faint); font-size: 13px; }
         .post .aif-msg { font-size: 15px; }
-      </style>
+      </style><!-- end scorecard styles -->
 
-      <script>
+      <script> // scorecard: runs in the browser, sends nothing typed
         (function () {
           var $ = function (id) { return document.getElementById(id); };
           var nameIn = $('aif-name'), whatIn = $('aif-what'), whereIn = $('aif-where'), siteIn = $('aif-site'), robotsIn = $('aif-robots');
@@ -164,7 +168,7 @@ category: BusinessApplication
               '<label><input type="checkbox" id="aif-r' + i + '"> Suggested us</label></div>';
           }).join('');
 
-          var counted = false;
+          var counted = false, sample = false;
           function renderScore() {
             var n = val(nameIn, 'your business'), w = val(whatIn, 'what you sell'), p = val(whereIn, 'your town');
             var tried = 0, knew = 0, wrong = 0, none = 0, rec = 0;
@@ -179,7 +183,7 @@ category: BusinessApplication
             });
             var card = $('aif-card'), fixes = $('aif-fixes');
             if (!tried) { card.hidden = true; fixes.innerHTML = ''; return; }
-            if (!counted && window.gtag) { counted = true; gtag('event', 'ai_check_scored'); }
+            if (!sample && !counted && window.gtag) { counted = true; gtag('event', 'ai_check_scored'); }
             card.hidden = false;
             card.innerHTML = '<p class="aif-card__big">' + knew + ' of ' + tried + ' assistants know ' + esc(n) + '.</p>' +
               '<p class="aif-card__line">' + (wrong ? wrong + ' got something wrong. ' : '') +
@@ -297,9 +301,16 @@ category: BusinessApplication
               : 'Open <code>yoursite.com/robots.txt</code> in a new tab, copy everything on it, and paste it here.';
           }
 
-          [nameIn, whatIn, whereIn].forEach(function (el) { el.addEventListener('input', function () { renderQs(); renderScore(); }); });
+          [nameIn, whatIn, whereIn].forEach(function (el) { el.addEventListener('input', function () { sample = false; renderQs(); renderScore(); }); });
+          $('aif-sample').addEventListener('click', function () {
+            nameIn.value = 'Corner Bakery'; whatIn.value = 'sourdough bread'; whereIn.value = 'the old town'; siteIn.value = 'example.com';
+            ['right', 'wrong', 'none', 'right'].forEach(function (k, i) { $('aif-k' + i).value = k; $('aif-r' + i).checked = i === 3; });
+            sample = true;
+            renderQs(); renderSiteLink(); renderScore();
+            if (window.gtag) gtag('event', 'sample_tried');
+          });
           siteIn.addEventListener('input', renderSiteLink);
           robotsIn.addEventListener('input', renderBots);
           renderQs(); renderSiteLink();
         })();
-      </script>
+      </script><!-- end scorecard -->
