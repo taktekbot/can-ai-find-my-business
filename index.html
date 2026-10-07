@@ -74,7 +74,7 @@
           <input id="aif-what" type="text" autocomplete="off" placeholder="sourdough bread">
         </div>
         <div class="aif-field">
-          <label for="aif-where">Town or area you serve</label>
+          <label for="aif-where">Town or area you serve (leave empty if you only sell online)</label>
           <input id="aif-where" type="text" autocomplete="off" placeholder="your town">
         </div>
         <div class="aif-field">
@@ -166,6 +166,9 @@
         .post .aif-card__big { margin: 0; font-size: 26px; line-height: 1.25; color: var(--ink); font-weight: 500; }
         .post .aif-card__line { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
         .post .aif-card__note { margin: 12px 0 0; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+        .post .aif-copy { font-family: var(--mono); font-size: 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+        .post .aif-copy:hover { border-color: var(--signal); color: var(--signal); }
+        .post .aif-copy:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
         .aif-fix { margin: 0 0 16px; padding: 14px 16px; background: var(--paper-2); border-radius: 6px; }
         .post .aif-fix h3 { margin: 0 0 6px; font-size: 16px; }
         .post .aif-fix p { margin: 0; font-size: 15px; }
@@ -202,12 +205,17 @@
           }
 
           // Step 1: the questions
+          // " in <town>", or nothing for a business that only sells online.
+          function inPlace() {
+            var p = whereIn.value.trim();
+            return !p || /^(online|on ?line only|online only|internet|the internet|web|the web|worldwide|everywhere|anywhere|nationwide|n\/?a|none|-)$/i.test(p) ? '' : ' in ' + p;
+          }
           function questions() {
-            var n = val(nameIn, '[business name]'), w = val(whatIn, '[what you sell]'), p = val(whereIn, '[your town]');
+            var n = val(nameIn, '[business name]'), w = val(whatIn, '[what you sell]'), at = inPlace();
             return [
-              { q: 'What is ' + n + ' in ' + p + '?', why: 'Does it know you exist, and are the details right?' },
-              { q: "What's the website for " + n + ' in ' + p + '?', why: 'Does it know your real address on the web?' },
-              { q: 'Where can I get ' + w + ' in ' + p + '?', why: 'Does it suggest you when the customer doesn’t know your name?' }
+              { q: 'What is ' + n + at + '?', why: 'Does it know you exist, and are the details right?' },
+              { q: "What's the website for " + n + at + '?', why: 'Does it know your real address on the web?' },
+              { q: 'Where can I get ' + w + (at || ' online') + '?', why: 'Does it suggest you when the customer doesn’t know your name?' }
             ];
           }
           function renderQs() {
@@ -237,7 +245,7 @@
 
           var counted = false, sample = false;
           function renderScore() {
-            var n = val(nameIn, 'your business'), w = val(whatIn, 'what you sell'), p = val(whereIn, 'your town');
+            var n = val(nameIn, 'your business'), w = val(whatIn, 'what you sell'), at = inPlace(), wp = w + (at || ' online');
             var tried = 0, knew = 0, wrong = 0, none = 0, rec = 0, knewNotRec = 0;
             ASSISTANTS.forEach(function (a, i) {
               var k = $('aif-k' + i).value, r = $('aif-r' + i).checked;
@@ -250,27 +258,52 @@
               if (k !== 'none' && !r) knewNotRec++;
             });
             var card = $('aif-card'), fixes = $('aif-fixes');
-            if (!tried) { card.hidden = true; fixes.innerHTML = ''; return; }
+            if (!tried) { card.hidden = true; fixes.innerHTML = ''; summary = ''; return; }
             if (!sample && !counted && window.gtag) { counted = true; gtag('event', 'ai_check_scored'); }
             card.hidden = false;
             card.innerHTML = '<p class="aif-card__big">' + knew + ' of ' + tried + ' assistants know ' + esc(n) + '.</p>' +
               '<p class="aif-card__line">' + (wrong ? wrong + ' got something wrong. ' : '') +
-              rec + ' of ' + tried + ' suggested it for “' + esc(w) + ' in ' + esc(p) + '”.</p>' +
-              '<p class="aif-card__note">Checked by hand, ' + new Date().toISOString().slice(0, 10) + '. Answers change; check again in a month.</p>';
+              rec + ' of ' + tried + ' suggested it for “' + esc(wp) + '”.</p>' +
+              '<p class="aif-card__note">Checked by hand, ' + new Date().toISOString().slice(0, 10) + '. Answers change; check again in a month.</p>' +
+              '<p class="aif-card__note"><button type="button" class="aif-copy" id="aif-copy">Copy a summary to send</button> to whoever runs your website or listings.</p>';
             var out = [];
             if (none) out.push(['Didn’t know you at all',
               '<p>First, check Step 3 below: a robots.txt that blocks an assistant’s search bot keeps your pages out of its answers. If your site is behind Cloudflare, check its <a href="#cloudflare">AI bot settings</a> too.</p>' +
-              '<p>Then claim your free listings: a <a href="https://www.google.com/business/">Google Business Profile</a> and <a href="https://www.bingplaces.com/">Bing Places</a>. Gemini draws on Google, and Copilot on Bing. A new or small business often has no page an assistant can find yet; a listing is usually the quickest first one.</p>']);
+              (at
+              ? '<p>Then claim your free listings: a <a href="https://www.google.com/business/">Google Business Profile</a> and <a href="https://www.bingplaces.com/">Bing Places</a>. Gemini draws on Google, and Copilot on Bing. A new or small business often has no page an assistant can find yet; a listing is usually the quickest first one.</p>'
+              : '<p>Then make sure a page on your own site says plainly who you are and what you sell. A Google Business Profile won’t help here: Google only gives them to businesses that meet customers in person, and lists online-only businesses as not eligible (<a href="https://support.google.com/business/answer/13763036">its eligibility rules</a>). Get listed where your customers already shop or look, since assistants read those pages too.</p>')]);
             if (wrong) out.push(['Knew you, but got something wrong',
               '<p>Assistants repeat what they read. Look at the sources under the answer: the wrong fact is usually on one of those pages, often an old listing.</p>' +
               '<p>Make your name, address, phone number and hours the same everywhere they appear: your site, your Google and Bing listings, and directories. Fix the listing first; it is often what gets read.</p>']);
             if (knewNotRec) out.push(['Knew you, but didn’t suggest you',
-              '<p>To be suggested for “' + esc(w) + ' in ' + esc(p) + '”, an assistant has to find a page that says plainly that you do that, there. Put one sentence on your site that says exactly that, in the words customers use.</p>' +
+              '<p>To be suggested for “' + esc(wp) + '”, an assistant has to find a page that says plainly that you offer ' + esc(w) + (at ? esc(at) : ', and how people buy it') + '. Put one sentence on your site that says exactly that, in the words customers use.</p>' +
               '<p>Genuine reviews on your listings help too. No one can promise a recommendation, and anyone who sells one is guessing.</p>']);
             if (!none && !wrong && rec >= tried) out.push(['Every assistant you checked knew you and suggested you',
               '<p>Keep your details the same everywhere when anything changes, and check again in a month.</p>']);
             fixes.innerHTML = out.map(function (f) { return '<div class="aif-fix"><h3>' + f[0] + '</h3>' + f[1] + '</div>'; }).join('');
+            var LABEL = { right: 'knew us, details right', wrong: 'knew us, got something wrong', none: 'didn’t know us' };
+            var lines = ['Can AI assistants find ' + n + '? Checked by hand on ' + new Date().toISOString().slice(0, 10) + '.', ''];
+            ASSISTANTS.forEach(function (a, i) {
+              var k = $('aif-k' + i).value;
+              if (k) lines.push('- ' + a + ': ' + LABEL[k] + ($('aif-r' + i).checked ? '; suggested us' : '; didn’t suggest us') + ' for “' + wp + '”');
+            });
+            if (robotsSummary) lines.push('', robotsSummary);
+            if (out.length) lines.push('', 'What usually fixes it:');
+            out.forEach(function (f) {
+              var d = document.createElement('div'); d.innerHTML = f[1];
+              lines.push('- ' + f[0] + ': ' + [].map.call(d.querySelectorAll('p'), function (x) { return x.textContent.trim(); }).join(' ').replace(/^First, check Step 3 below: /, 'First, check robots.txt: '));
+            });
+            lines.push('', 'Questions and checks: https://taktekbot.com/can-ai-find-my-business/');
+            summary = lines.join('\n');
           }
+          var summary = '', robotsSummary = '';
+          $('aif-card').addEventListener('click', function (e) {
+            var b = e.target.closest('#aif-copy'); if (!b || !summary) return;
+            var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy a summary to send'; }, 1500); };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(summary).then(done, function () { b.textContent = 'Couldn’t copy: your browser blocked it'; });
+            else b.textContent = 'Couldn’t copy: your browser blocked it';
+            if (!sample && window.gtag) gtag('event', 'summary_copied');
+          });
           $('aif-score').addEventListener('change', renderScore);
 
           // Step 3: robots.txt, read the way RFC 9309 describes
@@ -323,6 +356,8 @@
             var b = bot.toLowerCase();
             var mine = groups.filter(function (g) { return g.agents.indexOf(b) >= 0; });
             var which = 'own';
+            // Bing: with no bingbot section, Bingbot obeys an msnbot section before * (blogs.bing.com, May 2012).
+            if (!mine.length && b === 'bingbot') { mine = groups.filter(function (g) { return g.agents.indexOf('msnbot') >= 0; }); if (mine.length) which = 'msnbot'; }
             if (!mine.length) { mine = groups.filter(function (g) { return g.agents.indexOf('*') >= 0; }); which = mine.length ? 'star' : 'none'; }
             return { which: which, rules: [].concat.apply([], mine.map(function (g) { return g.rules; })) };
           }
@@ -342,6 +377,8 @@
           }
           function renderBots() {
             var txt = robotsIn.value, box = $('aif-bots');
+            robotsSummary = '';
+            renderScore();
             if (!txt.trim()) { box.innerHTML = ''; return; }
             var groups = parseRobots(txt);
             if (!groups.length && /content.?signal/i.test(txt)) {
@@ -363,15 +400,20 @@
                 var status = !home ? '<span class="aif-bad">Blocked</span>'
                   : !page ? '<span class="aif-bad">Most pages blocked</span>'
                   : (some ? '<span class="aif-ok">Allowed, some paths blocked</span>' : '<span class="aif-ok">Allowed</span>');
-                var from = r.which === 'own' ? 'its own rules' : (r.which === 'star' ? 'the rules for every bot (*)' : 'no rules apply');
+                var from = r.which === 'own' ? 'its own rules' : r.which === 'msnbot' ? 'the msnbot rules (Bing obeys them when there’s no bingbot section)'
+                  : (r.which === 'star' ? 'the rules for every bot (*)' : 'no rules apply');
                 return '<tr><td>' + bot[0] + '</td><td>' + status + '<span class="aif-sub">' + bot[1] + ', ' + from + '</span></td></tr>';
               }).join('') + '</tbody></table>';
             }).join('') + (blockedSearch.length
-              ? '<p class="aif-msg"><strong>Your robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> Those assistants can’t use your pages in their answers. Find the <code>Disallow</code> line under that bot’s name (or under <code>User-agent: *</code>) and remove it, or ask whoever set up your site to. Where that file lives on WordPress, Wix, Squarespace and Shopify is in <a href="/robots-txt-tester/#where-to-change">Where to change your robots.txt</a>. On some website builders it’s a setting called something like “block AI crawlers”.</p>'
+              ? '<p class="aif-msg"><strong>Your robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> Those assistants can’t use your pages in their answers. Find the <code>Disallow</code> line under that bot’s name (or under <code>User-agent: *</code>) and remove it (for Bingbot, also look under <code>User-agent: msnbot</code>), or ask whoever set up your site to. Where that file lives on WordPress, Wix, Squarespace and Shopify is in <a href="/robots-txt-tester/#where-to-change">Where to change your robots.txt</a>. On some website builders it’s a setting called something like “block AI crawlers”.</p>'
               : '<p class="aif-msg">No search bot is blocked from your pages by robots.txt. If your site is behind Cloudflare, check its AI bot settings too: <a href="#cloudflare">robots.txt allows them, but the site still turns them away</a>. Otherwise the cause is elsewhere: see the fixes in Step 2.</p>')
               + (/BEGIN Cloudflare Managed/i.test(txt)
               ? '<p class="aif-msg">Part of this file was written by Cloudflare: the lines between <code>BEGIN Cloudflare Managed content</code> and <code>END Cloudflare Managed Content</code>. They ask training bots to stay away and leave search bots alone, but they also block Google-Extended, which can keep you out of the Gemini apps’ answers. They’re changed in Cloudflare, not on your website: <a href="#cloudflare">see how</a>.</p>'
               : '');
+            robotsSummary = blockedSearch.length
+              ? 'robots.txt blocks these search bots, so those assistants can’t use the site in answers: ' + blockedSearch.join(', ') + '.'
+              : 'robots.txt blocks none of the assistants’ search bots.';
+            renderScore();
           }
 
           function renderSiteLink() {
