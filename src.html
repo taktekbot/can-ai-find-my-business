@@ -14,14 +14,17 @@ category: BusinessApplication
         <div class="aif-field">
           <label for="aif-what">What you sell or do, as a customer would say it</label>
           <input id="aif-what" type="text" autocomplete="off" placeholder="sourdough bread">
+          <p class="aif-hint" id="aif-what-note" hidden></p>
         </div>
         <div class="aif-field">
           <label for="aif-where">Town or area you serve (leave empty if you only sell online)</label>
           <input id="aif-where" type="text" autocomplete="off" placeholder="your town">
+          <p class="aif-hint" id="aif-where-note" hidden></p>
         </div>
         <div class="aif-field">
           <label for="aif-site">Website (optional)</label>
           <input id="aif-site" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="example.com">
+          <p class="aif-hint" id="aif-site-note" hidden></p>
         </div>
       </div>
 
@@ -148,19 +151,50 @@ category: BusinessApplication
 
           // Step 1: the questions
           // " in <town>", or nothing for a business that only sells online.
-          function inPlace() {
-            var p = whereIn.value.trim();
-            return !p || /^(online|on ?line only|online only|internet|the internet|web|the web|worldwide|everywhere|anywhere|nationwide|n\/?a|none|-)$/i.test(p) ? '' : ' in ' + p;
+          var ONLINE = /^(online|on ?line only|online only|internet|the internet|web|the web|worldwide|everywhere|anywhere|nationwide|countrywide|n\/?a|none|-|((we )?(deliver|ship|delivery|shipping|sell)\s+)?(across|throughout|all over|to all of|everywhere in)\s+the\s+(country|world|nation))$/i;
+          // { place, note }: the town as a customer would ask it, from whatever was typed
+          function readWhere() {
+            var p = whereIn.value.trim().replace(/[.!?]+$/, '').replace(/^(in|at|around|near)\s+(?!me$)/i, '');
+            if (!p || ONLINE.test(p)) return { place: '' };
+            if (/^(near me|nearby|local|locally|my area|around here|here)$/i.test(p))
+              return { place: '', note: 'An assistant doesn’t know where “' + p + '” is for a customer it has never met. Type the town or area, the way a customer would.' };
+            var both = p.match(/^(?:online|on ?line|the web|internet)\s*(?:and|&|\+|,)\s*(?:in\s+)?(.+)$/i) || p.match(/^(.+?)\s*(?:and|&|\+|,)\s*online$/i);
+            if (both) return { place: both[1], note: 'The questions use ' + both[1] + '. You sell online too, so also ask the last one with “online” instead of the town.' };
+            // A street address: customers ask by town, so keep the parts without a house number or postcode
+            if (/\d/.test(p) && /,/.test(p)) {
+              var parts = p.split(/\s*,\s*/).filter(function (x) { return x && !/\d/.test(x); });
+              if (parts.length) return { place: parts.join(', '), note: 'Customers ask by town, not street address, so the questions use “' + parts.join(', ') + '”. If that isn’t your town, type the town instead.' };
+            }
+            if (/\d/.test(p) && /\b(street|st|road|rd|avenue|ave|lane|ln|boulevard|blvd|drive|dr|square|floor|building|suite)\b/i.test(p))
+              return { place: p, note: 'That looks like a street address. Customers ask by town or area, so type that instead.' };
+            return { place: p };
           }
+          function inPlace() { var r = readWhere(); return r.place ? ' in ' + r.place : ''; }
+          // Kinds of business: customers ask for "a bakery", not "where can I get bakery"
+          var KINDS = /^(a |an |the )?(.*\b)?(bakery|bakeries|butcher|florist|restaurant|cafe|café|coffee shop|pub|hotel|guesthouse|salon|hair salon|hairdresser|barber|barbershop|dentist|doctor|clinic|plumber|electrician|mechanic|garage|gym|lawyer|solicitor|accountant|photographer|tailor|pharmacy|bookshop|bookstore|shop|store|boutique|studio|agency|school|nursery|daycare|vet|veterinarian|tutor|cleaning company|painter|builder|contractor|roofer|locksmith|architect|therapist|physiotherapist|pizzeria|brewery|winery|caterer|carpenter|gardener|landscaper|optician|spa|hostel|bistro|deli|supermarket|grocery store|garden centre|garden center|print shop|repair shop)$/i;
+          // { w, kind, note }: what customers ask for, from whatever was typed
+          function readWhat() {
+            var w = whatIn.value.trim().replace(/[.!?]+$/, '');
+            if (!w) return { w: '' };
+            if (/^(we|i|our|my)\b/i.test(w) && /\s\S+\s/.test(w))
+              return { w: w, note: 'Type it the way a customer would ask for it, like “sourdough bread” or “a plumber”, not a sentence about you.' };
+            var k = w.match(KINDS);
+            if (k) return { w: w.replace(/^(a|an|the)\s+/i, ''), kind: true };
+            return { w: w };
+          }
+          function showNote(id, text) { var el = $(id); el.textContent = text || ''; el.hidden = !text; }
           function questions() {
-            var n = val(nameIn, '[business name]'), w = val(whatIn, '[what you sell]'), at = inPlace();
+            var n = val(nameIn, '[business name]'), what = readWhat(), w = what.w || '[what you sell]', at = inPlace();
+            var a = /^[aeiou]/i.test(w) ? 'an ' : 'a ';
             return [
               { q: 'What is ' + n + at + '?', why: 'Does it know you exist, and are the details right?' },
               { q: "What's the website for " + n + at + '?', why: 'Does it know your real address on the web?' },
-              { q: 'Where can I get ' + w + (at || ' online') + '?', why: 'Does it suggest you when the customer doesn’t know your name?' }
+              { q: what.kind ? 'Can you recommend ' + a + w + (at || ' online') + '?' : 'Where can I get ' + w + (at || ' online') + '?', why: 'Does it suggest you when the customer doesn’t know your name?' }
             ];
           }
           function renderQs() {
+            showNote('aif-where-note', readWhere().note);
+            showNote('aif-what-note', readWhat().note);
             $('aif-qs').innerHTML = questions().map(function (x, i) {
               return '<li class="aif-q"><span class="aif-q__text">' + esc(x.q) + '<span class="aif-q__why">' + esc(x.why) +
                 '</span></span><button type="button" data-i="' + i + '">Copy</button></li>';
@@ -187,7 +221,7 @@ category: BusinessApplication
 
           var counted = false, sample = false;
           function renderScore() {
-            var n = val(nameIn, 'your business'), w = val(whatIn, 'what you sell'), at = inPlace(), wp = w + (at || ' online');
+            var n = val(nameIn, 'your business'), w = readWhat().w || 'what you sell', at = inPlace(), wp = w + (at || ' online');
             var tried = 0, knew = 0, wrong = 0, none = 0, rec = 0, knewNotRec = 0;
             ASSISTANTS.forEach(function (a, i) {
               var k = $('aif-k' + i).value, r = $('aif-r' + i).checked;
@@ -322,9 +356,18 @@ category: BusinessApplication
             robotsSummary = '';
             renderScore();
             if (!txt.trim()) { box.innerHTML = ''; return; }
+            var site = readSite(siteIn.value);
+            if (site.profile) {
+              box.innerHTML = '<p class="aif-msg">The website box holds a profile or map link, so this file, if it came from that address, is the platform’s, not yours: its rules are about the whole platform, and you can’t change them. Type your own website’s address in that box and paste its robots.txt instead. No website of your own? Then skip this step.</p>';
+              return;
+            }
             var groups = parseRobots(txt);
             if (!groups.length && /content.?signal/i.test(txt)) {
               box.innerHTML = '<p class="aif-msg">This is Cloudflare’s notice for sites without a robots.txt of their own. It has no rules, so robots.txt blocks no bot. Cloudflare can still turn bots away with its own settings: see <a href="#cloudflare">robots.txt allows them, but the site still turns them away</a>.</p>';
+              return;
+            }
+            if (!groups.length && /^\s*\S+\/robots\.txt\s*$/i.test(txt)) {
+              box.innerHTML = '<p class="aif-msg">That’s the address of the file, not what’s in it. Open it in a new tab, copy the text the page shows, and paste that here.</p>';
               return;
             }
             if (!groups.length) {
@@ -346,7 +389,9 @@ category: BusinessApplication
                   : (r.which === 'star' ? 'the rules for every bot (*)' : 'no rules apply');
                 return '<tr><td>' + bot[0] + '</td><td>' + status + '<span class="aif-sub">' + bot[1] + ', ' + from + '</span></td></tr>';
               }).join('') + '</tbody></table>';
-            }).join('') + (blockedSearch.length
+            }).join('') + (blockedSearch.length && site.shared
+              ? '<p class="aif-msg"><strong>This robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> It belongs to the host of your free address, so only they can change it. Moving to a domain of your own gives you a robots.txt you control.</p>'
+              : blockedSearch.length
               ? '<p class="aif-msg"><strong>Your robots.txt blocks ' + blockedSearch.join(', ') + '.</strong> Those assistants can’t use your pages in their answers. Find the <code>Disallow</code> line under that bot’s name (or under <code>User-agent: *</code>) and remove it (for Bingbot, also look under <code>User-agent: msnbot</code>), or ask whoever set up your site to. Where that file lives on WordPress, Wix, Squarespace and Shopify is in <a href="/robots-txt-tester/#where-to-change">Where to change your robots.txt</a>. On some website builders it’s a setting called something like “block AI crawlers”.</p>'
               : '<p class="aif-msg">No search bot is blocked from your pages by robots.txt. If your site is behind Cloudflare, check its AI bot settings too: <a href="#cloudflare">robots.txt allows them, but the site still turns them away</a>. Otherwise the cause is elsewhere: see the fixes in Step 2.</p>')
               + (/BEGIN Cloudflare Managed/i.test(txt)
@@ -358,13 +403,63 @@ category: BusinessApplication
             renderScore();
           }
 
+          // Pages on someone else's site: their robots.txt and Cloudflare settings aren't the owner's
+          var PROFILES = [
+            [/(^|\.)instagram\.com$/, 'an Instagram profile'], [/(^|\.)(facebook|fb)\.com$/, 'a Facebook page'],
+            [/(^|\.)tiktok\.com$/, 'a TikTok profile'], [/(^|\.)(x|twitter)\.com$/, 'an X profile'],
+            [/(^|\.)linkedin\.com$/, 'a LinkedIn page'], [/(^|\.)(youtube\.com|youtu\.be)$/, 'a YouTube link'],
+            [/^(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)$/, 'a WhatsApp link'], [/^linktr\.ee$/, 'a Linktree page'],
+            [/^(maps\.app\.goo\.gl|goo\.gl|g\.page|g\.co|maps\.google\.[a-z.]+)$/, 'a Google Maps link'],
+            [/(^|\.)(yelp|tripadvisor)\.[a-z.]+$/, 'a review-site listing'], [/(^|\.)etsy\.com$/, 'an Etsy shop']
+          ];
+          // Free addresses on the host's own domain: robots.txt and nameservers are the host's
+          var SHARED_HOSTS = [
+            [/\.wixsite\.com$/, 'Wix'], [/^sites\.google\.com$/, 'Google Sites'], [/\.github\.io$/, 'GitHub Pages'], [/\.gitlab\.io$/, 'GitLab Pages'],
+            [/\.myshopify\.com$/, 'Shopify'], [/\.wordpress\.com$/, 'WordPress.com'], [/\.blogspot\.com$/, 'Blogger'], [/\.netlify\.app$/, 'Netlify'],
+            [/\.vercel\.app$/, 'Vercel'], [/\.pages\.dev$/, 'Cloudflare Pages'], [/\.weebly\.com$/, 'Weebly'], [/\.square\.site$/, 'Square'],
+            [/\.webflow\.io$/, 'Webflow'], [/\.godaddysites\.com$/, 'GoDaddy'], [/\.carrd\.co$/, 'Carrd'], [/\.framer\.website$/, 'Framer'], [/\.squarespace\.com$/, 'Squarespace']
+          ];
+          // Whatever was typed in the website box → { raw, note, profile, shared }
+          function readSite(raw) {
+            var s = (raw || '').trim().replace(/^site:\s*/i, ''), notes = [];
+            var q = s.match(/[?&]q=([^&#]*)/i);
+            if (q && /(^|\/\/|\.)(google|bing)\.[a-z.]+\//i.test(s)) {
+              var inner = decodeURIComponent(q[1].replace(/\+/g, ' ')).match(/site:\s*(\S+)/i);
+              if (inner) s = inner[1];
+            }
+            var parts = s.split(/[\s,;]+/).filter(function (x) { return /[^\s.,;]\.[^\s.,;]/.test(x) || /^https?:/i.test(x); });
+            if (!parts.length) {
+              if (/\S\s+\S/.test(s)) return { note: 'That looks like a name, not a web address. Type the address your website opens at, like example.com.' };
+              if (s && /^[a-z0-9-]+$/i.test(s)) return { note: 'Add the ending too, like ' + s.toLowerCase() + '.com, or whatever your address ends in.' };
+              return {};
+            }
+            if (parts.length > 1) notes.push('You typed ' + parts.length + ' addresses. The links below are for the first, ' + parts[0] + '. Check the others the same way.');
+            var host = cleanSite(parts[0]);
+            for (var i = 0; i < PROFILES.length; i++) {
+              if (host && (PROFILES[i][0].test(host) || (/^(www\.)?google\.[a-z.]+$/.test(host) && /\/maps/.test(parts[0]) && PROFILES[i][1] === 'a Google Maps link')))
+                return { profile: true, note: 'That’s ' + PROFILES[i][1] + ', not a website of your own. Its robots.txt and bot settings belong to ' + host.replace(/^www\./, '') + ', and you can’t change them, so skip Step 3. Assistants do read pages like that one: keep your name, hours and what you sell the same there as everywhere else.' };
+            }
+            for (var j = 0; j < SHARED_HOSTS.length; j++) {
+              if (host && SHARED_HOSTS[j][0].test(host)) {
+                notes.push('Your site is on a free ' + SHARED_HOSTS[j][1] + ' address, so ' + host + '/robots.txt and its Cloudflare check belong to ' + SHARED_HOSTS[j][1] + ', not to you. Paste it anyway to see what it allows, but if it blocks a bot, only ' + SHARED_HOSTS[j][1] + ' can change that' + (/myshopify/.test(host) ? '' : '; with a domain of your own you’d get a file of your own') + '.' + (/myshopify/.test(host) ? ' If your shop also has a domain of its own, type that instead: that’s the address assistants link to.' : ''));
+                return { raw: parts[0], shared: true, note: notes.join(' ') };
+              }
+            }
+            return { raw: parts[0], note: notes.join(' ') };
+          }
           function renderSiteLink() {
-            var s = cleanSite(siteIn.value), shown = shownSite(siteIn.value);
+            var read = readSite(siteIn.value);
+            showNote('aif-site-note', read.note);
+            var s = read.profile ? '' : cleanSite(read.raw), shown = shownSite(read.raw);
             var apex = s.replace(/^www\./, ''), shownApex = shown.replace(/^www\./, '');
-            $('aif-ns').innerHTML = s
+            $('aif-ns').innerHTML = read.shared
+              ? 'that check doesn’t apply to a free address like ' + esc(shown) + ': its nameservers are the host’s, and so are any Cloudflare settings'
+              : s
               ? 'open <a href="https://toolbox.googleapps.com/apps/dig/#NS/' + esc(apex) + '" target="_blank" rel="noopener">Google’s dig page for ' + esc(shownApex) + '</a> and look at the answers'
               : 'open <a href="https://toolbox.googleapps.com/apps/dig/#NS/" target="_blank" rel="noopener">Google’s dig page</a>, type your domain and pick NS';
-            $('aif-robots-link').innerHTML = s
+            $('aif-robots-link').innerHTML = read.profile
+              ? 'The website box holds a profile or map link, not a website of your own, so there’s no robots.txt of yours to check. If you also have a website, type its address in that box.'
+              : s
               ? 'Open <a href="https://' + esc(s) + '/robots.txt" target="_blank" rel="noopener">' + esc(shown) + '/robots.txt</a> in a new tab, copy everything on it, and paste it here. (This page can’t fetch it for you: browsers don’t let one site read another’s files.)'
               : 'Open <code>yoursite.com/robots.txt</code> in a new tab, copy everything on it, and paste it here.';
           }
@@ -377,7 +472,7 @@ category: BusinessApplication
             renderQs(); renderSiteLink(); renderScore();
             if (window.gtag) gtag('event', 'sample_tried');
           });
-          siteIn.addEventListener('input', renderSiteLink);
+          siteIn.addEventListener('input', function () { renderSiteLink(); renderBots(); });
           robotsIn.addEventListener('input', renderBots);
           renderQs(); renderSiteLink();
         })();
